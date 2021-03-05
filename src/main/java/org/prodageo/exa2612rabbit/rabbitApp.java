@@ -20,18 +20,32 @@ public class rabbitApp
         int i = 0 ;
         int secondsToSleep = 1 ; // 1 for rabbit
 
-        while ( i < 10 ) {
+        try
+        {
+            sharedCounter smc = new sharedCounter ( ) ;
 
-            sc = sc + 1 ;
-            System.out.println( currentTime () + " : " + sc );
 
-            // wait a little bit
-            i = i + 1 ;
-            try {
-                Thread.sleep(secondsToSleep * 1000);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
+
+            while ( i < 7 ) {
+
+                // sc = sc + 1 ;
+                sc = smc.incrementSharedMemoryCounter() ;
+
+                System.out.println( currentTime () + " : " + sc );
+
+                // wait a little bit
+                i = i + 1 ;
+                try {
+                    Thread.sleep(secondsToSleep * 1000);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
             }
+
+        }        
+        catch ( Throwable e)
+        {
+            e.printStackTrace();
         }
     }
 

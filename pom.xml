@@ -24,11 +24,13 @@
       <scope>test</scope>
     </dependency>
 
+<!-- FBABLIB
         <dependency>
             <groupId>org.prodageo.exa2612lib</groupId>
             <artifactId>exa2612lib</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+-->
 
   </dependencies>
 

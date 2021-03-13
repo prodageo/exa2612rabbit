@@ -9,6 +9,8 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.StandardOpenOption;
 
+
+
 public class sharedCounter    extends genericCounter 
 {
     public static int theSharedCounter ;
@@ -58,23 +60,33 @@ public class sharedCounter    extends genericCounter
 	public int incrementSharedMemoryCounter ()
     {
 	
+		// the value stored in the shared memory
 		char c1 = getLastStoredCharacter ( ) ;
 		// System.out.println(  "getLastStoredCharacter : " + c1 );
-		
-		int i = Character.getNumericValue ( c1 ) ;
-		
-		int REDIX=10; //redix 10 is for decimal number, for hexa use redix 16  
-		char c2 = Character.forDigit(i+1,REDIX);    		
-		// System.out.println(  "incrementSharedMemoryCounter before put : " + c2 );
-		put ( c2 ) ;
-		
-		i = Character.getNumericValue ( c2 ) ;
 
+		// the shared memory manage characters => we need to increment character ...
+		char c2 = incrementCharacter ( c1 ) ;
+
+		// put the incremented value (a char) in the shared memory
+		put ( c2 ) ;
+
+		// an int is expected as a result => we need to convert the char (stored in the shared memory) in an int ...
+		int i = Character.getNumericValue ( c2 ) ;
         return i ;
     }
 
 
-
+	private char incrementCharacter ( char c1 )
+	{
+		
+		int i = Character.getNumericValue ( c1 ) ;
+	
+		int REDIX=10; //redix 10 is for decimal number, for hexa use redix 16  
+		char c2 = Character.forDigit(i+1,REDIX);    		
+		// System.out.println(  "incrementSharedMemoryCounter before put : " + c2 );
+	
+		return c2 ;
+	}
 
 
 
@@ -119,16 +131,10 @@ public class sharedCounter    extends genericCounter
 		return theSharedMemoryBuffer.position() ;
 	}
 
-    public char getStoredCharacterAt ( int p )
-	{
-		// put cursor position can not but set => manage a cursor locally !
-		return theSharedMemoryBuffer.get( p ) ; // at this position, a value has already been stored
-	}
-
     private char getLastStoredCharacter ( )
 	{
 		// SHOULD RAISE AN EXCEPTION IF theNextPutPosition == 0 !
-		return getStoredCharacterAt ( 0 ) ; // at this position, a value has already been stored
+		return theSharedMemoryBuffer.get( 0 ) ; // at this position, a value has already been stored
 	}
 	
 	
@@ -156,9 +162,10 @@ public class sharedCounter    extends genericCounter
         FileChannel theSharedMemoryChannel = FileChannel.open( theSharedMemoryFile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE );
 		
         MappedByteBuffer theSharedMemoryMappedBuffer = theSharedMemoryChannel.map( MapMode.READ_WRITE, 0, 4096 );
-        theSharedMemoryBuffer = theSharedMemoryMappedBuffer.asCharBuffer(); // est-ce nécessaire ? oui
+        theSharedMemoryBuffer = theSharedMemoryMappedBuffer.asCharBuffer();
 
-		// in case the exec is called to list the content of the Shared Memory
+		// in case the exec is called (start == '!') to list the content of the Shared Memory,
+		// do not initialize the shared memory with start
 		// mvn exec:java -Dexec.args="-l"
 		if ( start != '!' )
 		{
@@ -223,8 +230,8 @@ public class sharedCounter    extends genericCounter
 		
 				int j = 0 ;
 				while ( j < 1 ) {
-					char c = getStoredCharacterAt ( j ) ;
-					System.out.println( "Content of shared memory : " ) ;
+					char c = getLastStoredCharacter ( ) ; // getStoredCharacterAt ( j ) ;
+					System.out.println( "Content of shared memory at : " + currentTime () ) ;
 					System.out.println( j + " : " + c );
 					j = j + 1 ;
 				}

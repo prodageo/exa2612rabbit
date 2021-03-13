@@ -1,6 +1,7 @@
 // FBABLIB : package org.prodageo.exa2612lib;
 package org.prodageo.exa2612rabbit;
 
+
 public class heapCounter  extends genericCounter 
 {
     public int theHeapCounter ;
@@ -19,7 +20,7 @@ public class heapCounter  extends genericCounter
 
 	public void listContent ()
 	{
-		System.out.println( "Content of heap memory : " ) ;
+		System.out.println( "Content of heap memory at : " + currentTime () ) ;
 		System.out.println( 0 + " : " + theHeapCounter );		
 	}
 }

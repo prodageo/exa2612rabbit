@@ -60,12 +60,12 @@ public class rabbitApp
 				else if ( cmd1 == 's' ) // list shared memory content
 				{
 					theCounter = new sharedCounter ( start0 ) ;
-					count () ;
+					count ( start0 ) ;
 				}
 				else  // treat heap memory
 				{
 					theCounter = new heapCounter ( start0 ) ;
-					count () ;
+					count ( start0 ) ;
 				}
 			}
 		}
@@ -75,19 +75,21 @@ public class rabbitApp
 		}		
 	}
 		
-	public static void count ()
+	public static void count ( char start0 )
 	{
 		try
 		{
 			// loop to increment the counter (maybe concurrently with other thread !)
 			int i = 0 ;
+			int previous_c ;
+			int current_c = Character.getNumericValue ( start0 ) ;			
 			while ( i < 4 )
 			{
 				
-				int sc ;
-				sc = theCounter.incrementCounter( ) ;
+				previous_c = current_c ;
+				current_c = theCounter.incrementCounter( ) ;
 
-				System.out.println( currentTime () + " : " + sc );
+				System.out.println( theCounter.currentTime () + " : " + previous_c + " -> " + current_c );
 
 				// wait a little bit
 				try
@@ -108,11 +110,4 @@ public class rabbitApp
 			e.printStackTrace();
 		}
 	}
-
-
-    private static String currentTime ()
-    {
-        Calendar now = Calendar.getInstance();
-        return now.get(Calendar.HOUR_OF_DAY) + ":" + now.get(Calendar.MINUTE) + ":" + now.get(Calendar.SECOND) ;
-    }
  }

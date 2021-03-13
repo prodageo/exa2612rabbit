@@ -15,78 +15,100 @@ import java.util.Date;
 
 public class rabbitApp
 {
+	public static genericCounter theCounter ; 
+    public static int secondsToSleep = 5 ; // 1 for rabbit
+	
     public static void main( String[] args )
     {
-        int sc = sharedCounter.theSharedCounter ;
-        int i = 0 ;
-        int secondsToSleep = 1 ; // 1 for rabbit
-		char start = '0' ;
+		String cmd ;		
+		char cmd0 = '-' ;
+		char cmd1 = 's' ;
+
+		String start ;		
+		char start0 = '0' ;
+
 
 		if ( args.length > 0 )
 		{
-			String arg0  = args[0] ;
-			start = arg0.charAt(0) ;
-		}
-		
-		if ( start == '-' )
-		{
-
-			try
+			cmd  = args[0] ;
+			cmd0 = cmd.charAt(0) ;
+			cmd1 = cmd.charAt(1) ;			
+			
+			if ( args.length == 2 )
 			{
-				sharedCounter smc = new sharedCounter ( '!' ) ;
-				
-				int j = 0 ;
-				while ( j < 15 ) {
-					char c = smc.getStoredCharacterAt ( j ) ;
-					System.out.println( j + " : " + c );
-					j = j + 1 ;
-				}
-			}        
-			catch ( Throwable e)
-			{
-				e.printStackTrace();
+				start = args[1] ;
+				start0 = start.charAt(0) ;
 			}
 		}
 		else
 		{
-			try
+			cmd0 = '-' ;
+			cmd1 = 's' ;
+			start0 = '0' ;
+		}
+
+		System.out.println(  "command : " + cmd0 + cmd1 + ' ' + start0 );
+
+		try
+		{		
+			if ( cmd0 == '-' )
 			{
-				sharedCounter smc = new sharedCounter ( start ) ;
-
-
-
-				while ( i < 4 ) {
-
-					// sc = sc + 1 ;
-					sc = smc.incrementSharedMemoryCounter( ) ;
-
-					System.out.println( currentTime () + " : " + sc );
-
-					// wait a little bit
-					i = i + 1 ;
-					try {
-						Thread.sleep(secondsToSleep * 10000);
-					} catch (InterruptedException ie) {
-						Thread.currentThread().interrupt();
-					}
+				if ( cmd1 == 'l' ) // treat shared memory
+				{
+					theCounter = new sharedCounter ( '!' ) ;
 				}
-				
-				
-				int j = 0 ;
-				while ( j < 15 ) {
-					char c = smc.getStoredCharacterAt ( j ) ;
-					System.out.println( j + " : " + c );
-					j = j + 1 ;
+				else if ( cmd1 == 's' ) // list shared memory content
+				{
+					theCounter = new sharedCounter ( start0 ) ;
+					count () ;
 				}
-				
-
-			}        
-			catch ( Throwable e)
-			{
-				e.printStackTrace();
+				else  // treat heap memory
+				{
+					theCounter = new heapCounter ( start0 ) ;
+					count () ;
+				}
 			}
 		}
-    }
+		catch ( Throwable e)
+		{
+			e.printStackTrace();
+		}		
+	}
+		
+	public static void count ()
+	{
+		try
+		{
+			// loop to increment the counter (maybe concurrently with other thread !)
+			int i = 0 ;
+			while ( i < 4 )
+			{
+				
+				int sc ;
+				sc = theCounter.incrementCounter( ) ;
+
+				System.out.println( currentTime () + " : " + sc );
+
+				// wait a little bit
+				try
+				{
+					Thread.sleep(secondsToSleep * 1000);
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+				}
+				i = i + 1 ;
+			}
+			
+			// show the content of the shared memory
+			theCounter.listContent() ;
+
+		}        
+		catch ( Throwable e)
+		{
+			e.printStackTrace();
+		}
+	}
+
 
     private static String currentTime ()
     {

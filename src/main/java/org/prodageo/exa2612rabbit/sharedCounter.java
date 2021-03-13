@@ -8,12 +8,13 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.StandardOpenOption;
-// import java.nio.charset.Charset;
 
-public class sharedCounter 
+public class sharedCounter    extends genericCounter 
 {
     public static int theSharedCounter ;
 
+
+/*
     // a static variable : the same for all objects instances of the sharedCounter class
     private static int thePrivateStaticSharedCounter ;
 
@@ -27,7 +28,7 @@ public class sharedCounter
         thePrivateStaticSharedCounter = thePrivateStaticSharedCounter + 1 ;
         return thePrivateStaticSharedCounter ;
     }
-
+*/
 
 
 
@@ -48,67 +49,26 @@ public class sharedCounter
 
 
 
-
+	public int incrementCounter ()
+    {
+		return incrementSharedMemoryCounter () ;
+	}
 
 
 	public int incrementSharedMemoryCounter ()
     {
-        // thePrivateSharedCounter = thePrivateSharedCounter + 1 ;
-		
-		/*  https://stackoverflow.com/questions/46343616/how-can-i-convert-a-char-to-int-in-java/46343671
-		
-			char x = '9';
-			int y = Character.getNumericValue(x);   //use a existing function
-			System.out.println(y + " " + (y + 1));  // 9  10
-		*/
-
-		
+	
 		char c1 = getLastStoredCharacter ( ) ;
-		System.out.println(  "getLastStoredCharacter : " + c1 );
+		// System.out.println(  "getLastStoredCharacter : " + c1 );
 		
-		// 		int i = c - '0' ;
 		int i = Character.getNumericValue ( c1 ) ;
 		
-		int REDIX=10;//redix 10 is for decimal number, for hexa use redix 16  
+		int REDIX=10; //redix 10 is for decimal number, for hexa use redix 16  
 		char c2 = Character.forDigit(i+1,REDIX);    		
-		System.out.println(  "before put : " + c2 );
+		// System.out.println(  "incrementSharedMemoryCounter before put : " + c2 );
 		put ( c2 ) ;
-
 		
-/*		
-		char c ;
-		char v ;		
-		
-		c = theSharedMemoryBuffer.get (0) ;
-		System.out.println(  "view get(0)" + c );
-		v = theSharedMemoryBuffer.get (1) ;
-		System.out.println( "view get(1)" + v );
-		v = theSharedMemoryBuffer.get (2) ;
-		System.out.println( "view get(2)" + c );
-		v = theSharedMemoryBuffer.get (3) ;
-		System.out.println( "view get(3)" + c );
-		
-		// int i = c - '0' ;
-		int i = c ;
-		i = i + 1 ;
-		c = (char) i ;
-		
-		String s = String.valueOf(c);
-		System.out.println( "c increment : " + s );
-		
-		// char[] bufferChunk = s.toCharArray();
-        theSharedMemoryBuffer.put( s );
-		char cs = theSharedMemoryBuffer.get(0) ;
-		System.out.println( "s after : " + cs );
-
-		v = theSharedMemoryBuffer.get (1) ;
-		System.out.println( "view get after (1)" + v );
-		v = theSharedMemoryBuffer.get (2) ;
-		System.out.println(  "view get(2) after" + v );
-		
-		cs = theSharedMemoryBuffer.get(i) ;
-		System.out.println( "s after get(" + i + "): " + cs );			
-*/
+		i = Character.getNumericValue ( c2 ) ;
 
         return i ;
     }
@@ -116,48 +76,37 @@ public class sharedCounter
 
 
 
-/*
-    public sharedCounter ( ) throws Throwable {
-        // https://webdevdesigner.com/q/shared-memory-between-two-jvms-21766/
-
-        // https://github.com/caplogic/Mappedbus/tree/master
-        // In the code above the file "/tmp/test" is on disk and thus it's memory mapped by the library. To use the library with shared memory instead, point to a file in "/dev/shm", for example, "/dev/shm/test".
-        File f = new File( "/dev/shm/test" );
-
-        FileChannel channel = FileChannel.open( f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE );
-
-        MappedByteBuffer b = channel.map( MapMode.READ_WRITE, 0, 4096 );
-        theSharedMemoryBuffer = b.asCharBuffer();
-
-        char[] string = "0".toCharArray();
-        theSharedMemoryBuffer.put( string );
-    }
-*/
-
-
-
 
 
     // constructor : set the shared memory
 	private File             theSharedMemoryFile ;
-	private File             theSharedMemoryRandomAccessFile ;	
+	private FileChannel      theSharedMemoryChannel  ;
     private CharBuffer       theSharedMemoryBuffer ;
-	private MappedByteBuffer theSharedMemoryMappedBuffer ;
 
-	private int theNextPutPosition = 0 ;
+
 
 
     private void put ( char c )
 	{
-		System.out.println( "theNextPutPosition begin : " + theNextPutPosition );
-        // char[] string = c.toCharArray(); // char cannot be dereferenced
 		String string = String.valueOf(c);
-		System.out.println( "put " + string + " at " + theNextPutPosition );
+
+		
+		int thePositionBefore = theSharedMemoryBuffer.position() ;
+		// System.out.println( "position before put : " + thePositionBefore ) ;
         theSharedMemoryBuffer.put( string );
-		theNextPutPosition = theNextPutPosition + 1 ;
-		char c1 = theSharedMemoryBuffer.get( theNextPutPosition - 1 ) ;
-		System.out.println( "check value : " + c1 );
-		System.out.println( "theNextPutPosition end : " + theNextPutPosition );
+		int thePositionAfter = theSharedMemoryBuffer.position() ;
+		// System.out.println( "position after put : " + thePositionAfter ) ;
+		
+		theSharedMemoryBuffer.rewind(); // flip() position returns to 0 (in reading mode)
+
+		int thePositionAfterFlip = theSharedMemoryBuffer.position() ;
+		// System.out.println( "position after flip : " + thePositionAfterFlip ) ;
+		
+		char c1 = theSharedMemoryBuffer.get() ;
+		// after each get, rewind to 0 !!!
+		theSharedMemoryBuffer.rewind(); // flip() position returns to 0 (in reading mode)
+		// System.out.println( "check value : " + c1 );
+		// System.out.println( "theNextPutPosition end : " + theNextPutPosition );
 	}
 	
 
@@ -179,79 +128,50 @@ public class sharedCounter
     private char getLastStoredCharacter ( )
 	{
 		// SHOULD RAISE AN EXCEPTION IF theNextPutPosition == 0 !
-		return getStoredCharacterAt ( theNextPutPosition - 1 ) ; // at this position, a value has already been stored
+		return getStoredCharacterAt ( 0 ) ; // at this position, a value has already been stored
 	}
 	
 	
     public sharedCounter ( char start ) throws Throwable {
-        // https://webdevdesigner.com/q/shared-memory-between-two-jvms-21766/
+  
+		// https://webdevdesigner.com/q/shared-memory-between-two-jvms-21766/
 
-		// https://github.com/AlexanderSchuetz97/Ivshmem4j : QEMU ivshmem (inter virtual machine shared memory) from a Java application running inside a JVM.
+		// https://github.com/AlexanderSchuetz97/Ivshmem4j : 
+		// 		QEMU ivshmem (inter virtual machine shared memory) from a Java application running inside a JVM.
         // https://github.com/caplogic/Mappedbus/tree/master
-        // In the code above the file "/tmp/test" is on disk and thus it's memory mapped by the library. To use the library with shared memory instead, point to a file in "/dev/shm", for example, "/dev/shm/test".
+        // 		In the code above the file "/tmp/test" is on disk and thus it's memory mapped by the library.
+		//		To use the library with shared memory instead, point to a file in "/dev/shm", for example, "/dev/shm/test".
 		
 
 		if ( isWindows() )
 		{
 			theSharedMemoryFile = new File( "c:/tmp/mapped.txt" ) ;
-			// RandomAccessFile memoryMappedFile = new RandomAccessFile("largeFile.txt", "rw");
-
-			// https://www.javacodegeeks.com/2013/05/power-of-java-memorymapped-file.html
-			// f.delete() ;
 		}
 		else
 		{
 			
 			theSharedMemoryFile = new File( "/dev/shm/test" );
-			// RandomAccessFile memoryMappedFile = new RandomAccessFile("largeFile.txt", "rw");			
-			// f.delete() ;			
 		}
 
-        FileChannel channel = FileChannel.open( theSharedMemoryFile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE );
-		// theSharedMemoryFile
+        FileChannel theSharedMemoryChannel = FileChannel.open( theSharedMemoryFile.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE );
 		
-        MappedByteBuffer theSharedMemoryMappedBuffer = channel.map( MapMode.READ_WRITE, 0, 4096 );
-        theSharedMemoryBuffer = theSharedMemoryMappedBuffer.asCharBuffer(); // est-ce nécessaire ?
-		
-        put( start );
+        MappedByteBuffer theSharedMemoryMappedBuffer = theSharedMemoryChannel.map( MapMode.READ_WRITE, 0, 4096 );
+        theSharedMemoryBuffer = theSharedMemoryMappedBuffer.asCharBuffer(); // est-ce nécessaire ? oui
 
-/*
-		// https://javarevisited.blogspot.com/2012/01/memorymapped-file-and-io-in-java.html#axzz6oSL19K7l
-        // MappedByteBuffer out = memoryMappedFile.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, count);
-*/
-		
-		
-/*		
-        // MappedByteBuffer b = channel.map( MapMode.READ_WRITE, 0, 4096 );
-		theSharedMemoryByteBuffer
-		
-        // theSharedMemoryBuffer = b.asCharBuffer();
-*/
-		/*
-        char[] string = "0".toCharArray();
-		System.out.println( "c init : " + string[0] );
-        theSharedMemoryBuffer.put( string );
-		*/
-
-        /*
-
-            // read shared memory
-            char c;
-            while( ( c = charBuf.get() ) != 0 ) {
-                System.out.print( c );
-            }
-            System.out.println();
-        */
-		
+		// in case the exec is called to list the content of the Shared Memory
+		// mvn exec:java -Dexec.args="-l"
+		if ( start != '!' )
+		{
+			put( start );
+		}
     }
 
 
 
 	private static String OS = System.getProperty("os.name").toLowerCase();
 
-/*
-	public static void main(String[] args) {
-
+	public static void print_os ()
+	{
 		System.out.println(OS);
 
 		if (isWindows()) {
@@ -266,7 +186,6 @@ public class sharedCounter
 			System.out.println("Your OS is not support!!");
 		}
 	}
-*/
 
 	public static boolean isWindows() {
 		return OS.contains("win");
@@ -297,6 +216,22 @@ public class sharedCounter
 		}
 	}		
 
-
-
+	public void listContent ()
+	{
+			try
+			{
+		
+				int j = 0 ;
+				while ( j < 1 ) {
+					char c = getStoredCharacterAt ( j ) ;
+					System.out.println( "Content of shared memory : " ) ;
+					System.out.println( j + " : " + c );
+					j = j + 1 ;
+				}
+			}        
+			catch ( Throwable e)
+			{
+				e.printStackTrace();
+			}
+	}
 }

@@ -8,8 +8,8 @@ A first rapid client for Distributed Computing
 command : -s 3                          
 14:35:51 : 3 -> 4                       
 14:35:56 : 4 -> 5                       
-14:36:1 : 5 -> 5                        
-14:36:6 : 5 -> 7                        
+14:36:1 : 5 -> 5 (le compteur a été mis à 4 par la console 2 à 14:35:57 => l'appel à incrementCounter passe à 5 !)                        
+14:36:6 : 5 -> 7 (le compteur a été mis à 6 par la console 2 à 14:36:02 => l'appel à incrementCounter passe à 7 !)                        
 Content of shared memory at : 14:36:11  
 0 : 8                                   
 ```
